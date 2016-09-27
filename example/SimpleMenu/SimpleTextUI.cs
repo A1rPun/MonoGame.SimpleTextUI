@@ -9,7 +9,15 @@ namespace A1r.SimpleTextUI
         Right,
         Center
     }
-    
+
+    public enum Direction
+    {
+        Up,
+        Down,
+        Left,
+        Right
+    }
+
     public class TextElement
     {
         public string Text;
@@ -22,6 +30,7 @@ namespace A1r.SimpleTextUI
     public class SelectElement : TextElement
     {
         public string[] Options;
+        public int Index = 0;
         public SelectElement(string text, string[] options) : base(text)
         {
             Options = options;
@@ -76,19 +85,28 @@ namespace A1r.SimpleTextUI
             return origin;
         }
         // Move index up or down
-        public void Move(bool up = false)
+        public void Move(Direction dir)
         {
-            if (up)
+            
+            switch (dir)
             {
-                SelectedIndex--;
-                if (SelectedIndex < 0)
-                    SelectedIndex = Items.Length - 1;
-            }
-            else
-            {
-                SelectedIndex++;
-                if (SelectedIndex >= Items.Length)
-                    SelectedIndex = 0;
+                case Direction.Up:
+                    SelectedIndex--;
+                    if (SelectedIndex < 0)
+                        SelectedIndex = Items.Length - 1;
+                    break;
+                case Direction.Down:
+                    SelectedIndex++;
+                    if (SelectedIndex >= Items.Length)
+                        SelectedIndex = 0;
+                    break;
+                case Direction.Left:
+                    // get item on selectedindex and move index
+                    break;
+                case Direction.Right:
+                    break;
+                default:
+                    break;
             }
         }
         // Draw the SimpleTextUI in it's full glory

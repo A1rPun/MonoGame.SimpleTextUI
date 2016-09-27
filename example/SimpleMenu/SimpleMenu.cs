@@ -64,9 +64,14 @@ namespace SimpleMenu
         protected override void Update(GameTime gameTime)
         {
             if (iM.JustPressed(Keys.Up))
-                currentUI.Move(true);
+                currentUI.Move(Direction.Up);
             else if (iM.JustPressed(Keys.Down))
-                currentUI.Move();
+                currentUI.Move(Direction.Down);
+            else if (iM.JustPressed(Keys.Left))
+                currentUI.Move(Direction.Left);
+            else if (iM.JustPressed(Keys.Right))
+                currentUI.Move(Direction.Right);
+
             if (iM.JustPressed(Keys.Enter))
             {
                 if (menu.SelectedIndex == 2)
