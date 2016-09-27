@@ -10,8 +10,8 @@ Inspired by N++ (metanetsoftware)
 **Creating an instance**
 
     var font = Content.Load<SpriteFont>("{yourfont}");
-    var menu = new SimpleTextUI(this, font,
-        new[] { "Singleplayer", "Multiplayer", "Options", "Credits", "Exit" })
+    var items = new[] { "Singleplayer", "Multiplayer", "Options", "Credits", "Exit" };
+    var menu = new SimpleTextUI(this, font, items)
     {
         TextColor = Color.IndianRed,
         SelectedColor = Color.Red,
