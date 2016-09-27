@@ -26,30 +26,19 @@ namespace SimpleMenu
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
             var font = Content.Load<SpriteFont>("Menu");
-            menu = new SimpleTextUI(this)
+            menu = new SimpleTextUI(this, font, new[] { "Singleplayer", "Multiplayer", "Options", "Credits", "Exit" })
             {
-                Font = font,
+                Align = Alignment.Right,
                 TextColor = Color.IndianRed,
-                SelectedColor = Color.Red,
-                Items = new[]
-                {
-                    new TextElement("Singleplayer"),
-                    new TextElement("Multiplayer"),
-                    new TextElement("Options"),
-                    new TextElement("Credits"),
-                    new TextElement("Exit")
-                },
-                Align = Alignment.Right
+                SelectedColor = Color.Red
             };
-            options = new SimpleTextUI(this)
+            options = new SimpleTextUI(this, font, new[]
             {
-                Font = font,
-                Items = new[]
-                {
-                    new SelectElement("Audio", new[] { "5.1", "7" }),
-                    new SelectElement("Video", new[] { "Onboard", "GPU", "Both" }),
-                    new SelectElement("Numberwang", new[] { "2", "29", "42", "69", "1336.9", "1337" })
-                },
+                new SelectElement("Audio", new[] { "5.1", "7" }),
+                new SelectElement("Video", new[] { "Onboard", "GPU", "Both" }),
+                new SelectElement("Numberwang", new[] { "2", "29", "42", "69", "1336.9", "1337" })
+            })
+            {
                 Align = Alignment.Center,
                 Visible = false
             };
@@ -74,14 +63,14 @@ namespace SimpleMenu
 
             if (iM.JustPressed(Keys.Enter))
             {
-                if (menu.SelectedIndex == 2)
+                if (menu.GetValue() == "Options")
                 {
                     options.Visible = true;
                     menu.Visible = false;
                     currentUI = options;
                 }
 
-                if (menu.SelectedIndex == 4)
+                if (menu.GetValue() == "Exit")
                     Exit();
             }
             if (iM.JustPressed(Keys.Escape))

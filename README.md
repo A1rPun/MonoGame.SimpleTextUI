@@ -1,7 +1,7 @@
 # MonoGame.SimpleTextUI
 
 Create simple User Interfaces with Monogame.  
-Inspired by N++
+Inspired by N++ (metanetsoftware)
 
 ![](img/SimpleMenu.png)
 
@@ -9,40 +9,38 @@ Inspired by N++
 
 **Creating an instance**
 
-    var menu = new SimpleTextUI(this)
+    var font = Content.Load<SpriteFont>("{yourfont}");
+    var menu = new SimpleTextUI(this, font, new[]
     {
-        Font = Content.Load<SpriteFont>("{yourfont}"),
+        new TextElement("Singleplayer"),
+        new TextElement("Multiplayer"),
+        new TextElement("Options"),
+        new TextElement("Credits"),
+        new TextElement("Exit")
+    })
+    {
         TextColor = Color.IndianRed,
         SelectedColor = Color.Red,
-        Items = new[]
-        {
-            new TextElement("Singleplayer"),
-            new TextElement("Multiplayer"),
-            new TextElement("Options"),
-            new TextElement("Credits"),
-            new TextElement("Exit")
-        },
         Align = Alignment.Right
     };
 
 **Navigating through menu's**
 
-Call the `.Move(bool up)` to
+Call the `.Move(Direction)` to move the displayed selection a direction
 
     if (inputManager.JustPressed(Keys.Up))
-        menu.Move(true);
+        menu.Move(Direction.Up);
     else if (inputManager.JustPressed(Keys.Down))
-        menu.Move();
+        menu.Move(Direction.Down);
 
 **Adding logic to the selection**
 
     if (inputManager.JustPressed(Keys.Enter))
-        if(menu.SelectedIndex == 4)
+        if(menu.GetValue() == "Exit")
             Exit();
 
 ### TODO
 
-- Optimize code
 - Form Elements
 - Form set & get
 - More Customization
