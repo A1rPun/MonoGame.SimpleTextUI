@@ -20,39 +20,89 @@ namespace A1r.SimpleTextUI
 
     public class TextElement
     {
-        public string Text;
-        public Vector2 Size;
+        public string Caption;
         public Vector2 Position;
-        public Vector2 Origin;
         public Color Color;
 
-        public TextElement(string text)
+        public TextElement(string caption)
+        {
+            Caption = caption;
+        }
+        public virtual void Draw(SpriteBatch batch, SpriteFont font, Color? color = null)
+        {
+            batch.DrawString(font, Caption, Position, color ?? Color);
+        }
+
+    }
+
+    public class MultiTextElement : TextElement
+    {
+        public string Text = "";
+        public Vector2 TextPosition;
+        public MultiTextElement(string caption) : base(caption) { }
+        public MultiTextElement(string caption, string text) : base(caption)
         {
             Text = text;
         }
-        public void Draw(SpriteBatch batch, SpriteFont font, Color? color = null, float scale = 1f, SpriteEffects spriteEffect = SpriteEffects.None, float layerDepth = 0f)
+        public override void Draw(SpriteBatch batch, SpriteFont font, Color? color = null)
         {
-            batch.DrawString(font, Text, Position, color ?? Color, 0, Origin, scale, spriteEffect, layerDepth);
+            batch.DrawString(font, Caption, Position, color ?? Color);
+            batch.DrawString(font, Text, TextPosition, color ?? Color);
         }
+        public virtual void Update(bool left = false) { }
     }
 
-    public class SelectElement : TextElement
+    public class SelectElement : MultiTextElement
     {
         public string[] Options;
         public int Index = 0;
-        public SelectElement(string text, string[] options) : base(text)
+        public SelectElement(string caption, string[] options) : base(caption)
         {
             Options = options;
+            Text = options.Length > 0 ? options[0] : "";
+        }
+        public override void Update(bool left = false)
+        {
+            var length = Options.Length;
+            if (length == 0) return;
+            Index = left ? Index - 1 : Index + 1;
+            if (Index < 0)
+                Index = 0;
+            if (Index >= length)
+                Index = length - 1;
+            Text = Options[Index];
+        }
+    }
+
+    public class NumericElement : MultiTextElement
+    {
+        public float Value;
+        public float Max = float.MaxValue;
+        public float Min = float.MinValue;
+        public float Step;
+        public NumericElement(string caption, float value = 0f, float step = 1f) : base(caption)
+        {
+            Value = value;
+            Step = step;
+            Text = Value.ToString();
+        }
+        public override void Update(bool left = false)
+        {
+            Value = left ? Value - Step : Value + Step;
+            if (Value < Min)
+                Value = Min;
+            if (Value >= Max)
+                Value = Max;
+            Text = Value.ToString();
         }
     }
 
     public class SimpleTextUI : DrawableGameComponent
     {
         // Public
-        public float Scale = 1f;
         public Color TextColor = Color.LimeGreen;
         public Color SelectedColor = Color.DarkGreen;
-        public SpriteEffects SpriteEffect;
+        public int Width = 100;
         public Alignment Align
         {
             get { return align; }
@@ -105,6 +155,7 @@ namespace A1r.SimpleTextUI
         // Move index up or down
         public void Move(Direction dir = Direction.Down)
         {
+            MultiTextElement el;
             switch (dir)
             {
                 case Direction.Up:
@@ -118,9 +169,14 @@ namespace A1r.SimpleTextUI
                         index = 0;
                     break;
                 case Direction.Left:
-                    // get item on selectedindex and move index SelectElement
+                    el = elements[index] as MultiTextElement;
+                    if (el != null)
+                        el.Update(true);
                     break;
                 case Direction.Right:
+                    el = elements[index] as MultiTextElement;
+                    if (el != null)
+                        el.Update();
                     break;
                 default:
                     break;
@@ -128,19 +184,42 @@ namespace A1r.SimpleTextUI
         }
         public string GetValue()
         {
-            return elements[index].Text;
+            return elements[index].Caption;
         }
         // Set the items and update their positions
         public void SetItems(TextElement[] items)
         {
             var pos = getPosition();
+            var halfWidth = Width / 2;
             for (int i = 0; i < items.Length; i++)
             {
                 var item = items[i];
-                item.Size = uiFont.MeasureString(item.Text);
-                item.Origin = getOrigin(item.Size);
                 item.Position = pos;
-                pos.Y += item.Size.Y;
+                var size = uiFont.MeasureString(item.Caption);
+                var mtext = item as MultiTextElement;
+                if (mtext != null)
+                {
+                    if (align == Alignment.Center)
+                    {
+                        item.Position.X -= size.X + halfWidth;
+                        mtext.TextPosition = new Vector2(pos.X + halfWidth, pos.Y);
+                    }
+                    else if (align == Alignment.Right)
+                    {
+                        item.Position.X -= size.X + Width;
+                        mtext.TextPosition = new Vector2(pos.X - uiFont.MeasureString(mtext.Text).X, pos.Y);
+                    }
+                    else
+                        mtext.TextPosition = new Vector2(pos.X + Width, pos.Y);
+                }
+                else
+                {
+                    if (align == Alignment.Center)
+                        item.Position.X += size.X / 2;
+                    else if (align == Alignment.Right)
+                        item.Position.X += size.X;
+                }
+                pos.Y += size.Y;
             }
             elements = items;
         }
@@ -152,7 +231,7 @@ namespace A1r.SimpleTextUI
             {
                 var item = elements[i];
                 var color = i == index ? SelectedColor : TextColor;
-                item.Draw(batch, uiFont, color, Scale, SpriteEffect);
+                item.Draw(batch, uiFont, color);
             }
             batch.End();
             base.Draw(gameTime);
@@ -165,16 +244,6 @@ namespace A1r.SimpleTextUI
             else if (align == Alignment.Right)
                 return new Vector2(GraphicsDevice.Viewport.Width - padding.X, padding.Y);
             return padding;
-        }
-        // Get the text origin based on alignment
-        private Vector2 getOrigin(Vector2 size)
-        {
-            Vector2 origin = Vector2.Zero;
-            if (align == Alignment.Center)
-                origin.X = size.X / 2;
-            else if (align == Alignment.Right)
-                origin.X = size.X;
-            return origin;
         }
     }
 }

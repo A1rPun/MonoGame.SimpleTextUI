@@ -32,15 +32,19 @@ namespace SimpleMenu
                 TextColor = Color.IndianRed,
                 SelectedColor = Color.Red
             };
-            options = new SimpleTextUI(this, font, new[]
+            options = new SimpleTextUI(this, font, new TextElement[]
             {
-                new SelectElement("Audio", new[] { "5.1", "7" }),
-                new SelectElement("Video", new[] { "Onboard", "GPU", "Both" }),
+                new SelectElement("Video", new[] { "Fullscreen", "Windowed" }),
+                new NumericElement("Music", 9),
+                new NumericElement("SFX", 1337, 1337),
+                new SelectElement("Difficulty", new[] { "Chicken", "Casual", "Ragequit PLOS" }),
                 new SelectElement("Numberwang", new[] { "2", "29", "42", "69", "1336.9", "1337" })
             })
             {
+                //Width = 600,
                 Align = Alignment.Center,
-                Visible = false
+                Visible = false,
+                
             };
             currentUI = menu;
             iM = new InputManager(this);
@@ -75,6 +79,8 @@ namespace SimpleMenu
             }
             if (iM.JustPressed(Keys.Escape))
             {
+                if (currentUI == menu)
+                    Exit();
                 menu.Visible = true;
                 options.Visible = false;
                 currentUI = menu;

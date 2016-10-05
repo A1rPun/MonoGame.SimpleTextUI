@@ -20,7 +20,9 @@ Inspired by N++ (metanetsoftware)
 
 **Navigating through menu's**
 
-Call the `.Move(Direction)` to move the displayed selection a direction
+Call the `.Move(Direction)` to move the displayed selection a direction.  
+Example in combination with [MonoGame.InputManager](https://github.com/A1rPun/MonoGame.InputManager);
+
 
     if (inputManager.JustPressed(Keys.Up))
         menu.Move(Direction.Up);
