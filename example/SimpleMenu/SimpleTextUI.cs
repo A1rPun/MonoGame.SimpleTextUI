@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace A1r.SimpleTextUI
@@ -55,11 +56,12 @@ namespace A1r.SimpleTextUI
     public class SelectElement : MultiTextElement
     {
         public string[] Options;
-        public int Index = 0;
-        public SelectElement(string caption, string[] options) : base(caption)
+        public int Index;
+        public SelectElement(string caption, string[] options, int index = 0) : base(caption)
         {
             Options = options;
-            Text = options.Length > 0 ? options[0] : "";
+            Index = index;
+            Text = options.Length > 0 ? options[Index] : "";
         }
         public override void Update(bool left = false)
         {
@@ -77,14 +79,19 @@ namespace A1r.SimpleTextUI
     public class NumericElement : MultiTextElement
     {
         public float Value;
-        public float Max = float.MaxValue;
-        public float Min = float.MinValue;
+        public float Max;
+        public float Min;
         public float Step;
-        public NumericElement(string caption, float value = 0f, float step = 1f) : base(caption)
+        public int Decimals;
+        public NumericElement(string caption, float value = 0f, int decimals = 0,
+            float min = float.MinValue, float max = float.MaxValue, float step = 1f) : base(caption)
         {
             Value = value;
+            Decimals = decimals;
+            Min = min;
+            Max = max;
             Step = step;
-            Text = Value.ToString();
+            Text = Value.ToString("n" + Decimals.ToString());
         }
         public override void Update(bool left = false)
         {
@@ -93,13 +100,14 @@ namespace A1r.SimpleTextUI
                 Value = Min;
             if (Value >= Max)
                 Value = Max;
-            Text = Value.ToString();
+            Text = Value.ToString("n" + Decimals.ToString());
         }
     }
 
     public class SimpleTextUI : DrawableGameComponent
     {
         // Public
+        public SpriteFont Font;
         public Color TextColor = Color.LimeGreen;
         public Color SelectedColor = Color.DarkGreen;
         public int Width = 100;
@@ -109,21 +117,21 @@ namespace A1r.SimpleTextUI
             set
             {
                 align = value;
-                SetItems(elements);
+                Reflow();
             }
         }
+
         public Vector2 Padding
         {
             get { return padding; }
             set
             {
                 padding = value;
-                SetItems(elements);
+                Reflow();
             }
         }
         // Private
         TextElement[] elements;
-        SpriteFont uiFont;
         SpriteBatch batch;
         Alignment align;
         Vector2 padding;
@@ -134,7 +142,7 @@ namespace A1r.SimpleTextUI
         {
             batch = new SpriteBatch(Game.GraphicsDevice);
             padding = new Vector2(100);
-            uiFont = font;
+            Font = font;
         }
         public SimpleTextUI(Game game, SpriteFont font, string[] items) : this(game, font)
         {
@@ -182,9 +190,73 @@ namespace A1r.SimpleTextUI
                     break;
             }
         }
-        public string GetValue()
+
+        public void Move(Point point)
+        {
+            for (int i = 0; i < elements.Length; i++)
+            {
+                var el = elements[i];
+                var mtext = el as MultiTextElement;
+                Vector2 size;
+                if (mtext == null)
+                    size = Font.MeasureString(el.Caption);
+                else
+                {
+                    size = Font.MeasureString(mtext.Caption);
+                    size.X += Font.MeasureString(mtext.Text).X + Width;
+                }
+                var rectangle = new Rectangle((int)el.Position.X, (int)el.Position.Y, (int)size.X, (int)size.Y);
+                if (rectangle.Contains(point))
+                {
+                    index = i;
+                    break;
+                }
+            }
+        }
+        // Get the current caption
+        public string GetCurrentCaption()
         {
             return elements[index].Caption;
+        }
+        public string GetCurrentValue()
+        {
+            return GetValue(index);
+        }
+        // Get the current caption or value
+        public string GetValue(int index)
+        {
+            var el = elements[index];
+            var mtext = el as MultiTextElement;
+            return mtext == null ? el.Caption : mtext.Text;
+        }
+        // Get all the current captions or values
+        public string[] GetValues()
+        {
+            var length = elements.Length;
+            var result = new string[length];
+            for (int i = 0; i < length; i++)
+                result[i] = GetValue(i);
+            return result;
+        }
+        public void SetValue(int index, string val)
+        {
+            var el = elements[index];
+            var mtext = el as MultiTextElement;
+            if (mtext == null)
+                el.Caption = val;
+            else
+                mtext.Text = val;
+        }
+        public void SetValues(string[] values)
+        {
+            var length = values.Length;
+            for (int i = 0; i < length; i++)
+                SetValue(i, values[i]);
+        }
+
+        public void Reflow()
+        {
+            SetItems(elements);
         }
         // Set the items and update their positions
         public void SetItems(TextElement[] items)
@@ -195,7 +267,7 @@ namespace A1r.SimpleTextUI
             {
                 var item = items[i];
                 item.Position = pos;
-                var size = uiFont.MeasureString(item.Caption);
+                var size = Font.MeasureString(item.Caption);
                 var mtext = item as MultiTextElement;
                 if (mtext != null)
                 {
@@ -207,7 +279,7 @@ namespace A1r.SimpleTextUI
                     else if (align == Alignment.Right)
                     {
                         item.Position.X -= size.X + Width;
-                        mtext.TextPosition = new Vector2(pos.X - uiFont.MeasureString(mtext.Text).X, pos.Y);
+                        mtext.TextPosition = new Vector2(pos.X - Font.MeasureString(mtext.Text).X, pos.Y);
                     }
                     else
                         mtext.TextPosition = new Vector2(pos.X + Width, pos.Y);
@@ -215,9 +287,9 @@ namespace A1r.SimpleTextUI
                 else
                 {
                     if (align == Alignment.Center)
-                        item.Position.X += size.X / 2;
+                        item.Position.X -= size.X / 2;
                     else if (align == Alignment.Right)
-                        item.Position.X += size.X;
+                        item.Position.X -= size.X;
                 }
                 pos.Y += size.Y;
             }
@@ -231,7 +303,7 @@ namespace A1r.SimpleTextUI
             {
                 var item = elements[i];
                 var color = i == index ? SelectedColor : TextColor;
-                item.Draw(batch, uiFont, color);
+                item.Draw(batch, Font, color);
             }
             batch.End();
             base.Draw(gameTime);

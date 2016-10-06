@@ -13,9 +13,15 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin Menu.spritefont
+#begin Big.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
 /processorParam:TextureFormat=Compressed
-/build:Menu.spritefont
+/build:Big.spritefont
+
+#begin Small.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:TextureFormat=Compressed
+/build:Small.spritefont
 
