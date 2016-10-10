@@ -23,25 +23,26 @@ namespace A1r.SimpleTextUI
     {
         public string Caption;
         public Vector2 Position;
+        public Vector2 Size;
         public Color Color;
-
-        public TextElement(string caption)
+        public TextElement(string caption, Color? color = null)
         {
             Caption = caption;
+            Color = color ?? default(Color);
         }
         public virtual void Draw(SpriteBatch batch, SpriteFont font, Color? color = null)
         {
             batch.DrawString(font, Caption, Position, color ?? Color);
         }
-
     }
 
     public class MultiTextElement : TextElement
     {
         public string Text = "";
         public Vector2 TextPosition;
+        public Vector2 TextSize;
         public MultiTextElement(string caption) : base(caption) { }
-        public MultiTextElement(string caption, string text) : base(caption)
+        public MultiTextElement(string caption, string text, Color? color = null) : base(caption, color)
         {
             Text = text;
         }
@@ -106,10 +107,7 @@ namespace A1r.SimpleTextUI
 
     public class SimpleTextUI : DrawableGameComponent
     {
-        // Public
-        public SpriteFont Font;
-        public Color TextColor = Color.LimeGreen;
-        public Color SelectedColor = Color.DarkGreen;
+        public Color TextColor = Color.LightGreen;
         public int Width = 100;
         public Alignment Align
         {
@@ -120,7 +118,6 @@ namespace A1r.SimpleTextUI
                 Reflow();
             }
         }
-
         public Vector2 Padding
         {
             get { return padding; }
@@ -130,19 +127,39 @@ namespace A1r.SimpleTextUI
                 Reflow();
             }
         }
-        // Private
+        public TextElement SelectedElement
+        {
+            get { return selectedElement; }
+            set
+            {
+                selectedElement = value;
+                Reflow();
+            }
+        }
+        public SpriteFont Font
+        {
+            get { return _font; }
+            set
+            {
+                _font = value;
+                Reflow();
+            }
+        }
+        SpriteFont _font;
         TextElement[] elements;
         SpriteBatch batch;
         Alignment align;
         Vector2 padding;
         int index;
+        TextElement selectedElement;
 
         // Constructors
         public SimpleTextUI(Game game, SpriteFont font) : base(game)
         {
             batch = new SpriteBatch(Game.GraphicsDevice);
-            padding = new Vector2(100);
-            Font = font;
+            padding = new Vector2(0);
+            _font = font;
+            selectedElement = new TextElement("", Color.LimeGreen);
         }
         public SimpleTextUI(Game game, SpriteFont font, string[] items) : this(game, font)
         {
@@ -180,11 +197,13 @@ namespace A1r.SimpleTextUI
                     el = elements[index] as MultiTextElement;
                     if (el != null)
                         el.Update(true);
+                    Reflow();
                     break;
                 case Direction.Right:
                     el = elements[index] as MultiTextElement;
                     if (el != null)
                         el.Update();
+                    Reflow();
                     break;
                 default:
                     break;
@@ -197,14 +216,9 @@ namespace A1r.SimpleTextUI
             {
                 var el = elements[i];
                 var mtext = el as MultiTextElement;
-                Vector2 size;
-                if (mtext == null)
-                    size = Font.MeasureString(el.Caption);
-                else
-                {
-                    size = Font.MeasureString(mtext.Caption);
-                    size.X += Font.MeasureString(mtext.Text).X + Width;
-                }
+                var size = el.Size;
+                if (mtext != null)
+                    size.X += mtext.TextSize.X + Width;
                 var rectangle = new Rectangle((int)el.Position.X, (int)el.Position.Y, (int)size.X, (int)size.Y);
                 if (rectangle.Contains(point))
                 {
@@ -256,6 +270,13 @@ namespace A1r.SimpleTextUI
 
         public void Reflow()
         {
+            if (selectedElement != null)
+            {
+                var selel = selectedElement as MultiTextElement;
+                if (selel != null)
+                    selel.TextSize = _font.MeasureString(selel.Text);
+                selectedElement.Size = _font.MeasureString(selectedElement.Caption);
+            }
             SetItems(elements);
         }
         // Set the items and update their positions
@@ -263,23 +284,25 @@ namespace A1r.SimpleTextUI
         {
             var pos = getPosition();
             var halfWidth = Width / 2;
+            var selsize = selectedElement == null ? 0 : selectedElement.Size.X;
             for (int i = 0; i < items.Length; i++)
             {
                 var item = items[i];
                 item.Position = pos;
-                var size = Font.MeasureString(item.Caption);
+                item.Size = _font.MeasureString(item.Caption);
                 var mtext = item as MultiTextElement;
                 if (mtext != null)
                 {
+                    mtext.TextSize = _font.MeasureString(mtext.Text);
                     if (align == Alignment.Center)
                     {
-                        item.Position.X -= size.X + halfWidth;
+                        item.Position.X -= item.Size.X + halfWidth;
                         mtext.TextPosition = new Vector2(pos.X + halfWidth, pos.Y);
                     }
                     else if (align == Alignment.Right)
                     {
-                        item.Position.X -= size.X + Width;
-                        mtext.TextPosition = new Vector2(pos.X - Font.MeasureString(mtext.Text).X, pos.Y);
+                        item.Position.X -= item.Size.X + Width;
+                        mtext.TextPosition = new Vector2(pos.X - mtext.TextSize.X, pos.Y);
                     }
                     else
                         mtext.TextPosition = new Vector2(pos.X + Width, pos.Y);
@@ -287,11 +310,13 @@ namespace A1r.SimpleTextUI
                 else
                 {
                     if (align == Alignment.Center)
-                        item.Position.X -= size.X / 2;
+                        item.Position.X -= item.Size.X / 2;
                     else if (align == Alignment.Right)
-                        item.Position.X -= size.X;
+                        item.Position.X -= item.Size.X + selsize;
+                    else
+                        item.Position.X += selsize;
                 }
-                pos.Y += size.Y;
+                pos.Y += item.Size.Y;
             }
             elements = items;
         }
@@ -302,8 +327,21 @@ namespace A1r.SimpleTextUI
             for (int i = 0; i < elements.Length; i++)
             {
                 var item = elements[i];
-                var color = i == index ? SelectedColor : TextColor;
-                item.Draw(batch, Font, color);
+                var color = TextColor;
+                if (selectedElement != null && i == index)
+                {
+                    color = selectedElement.Color;
+                    selectedElement.Position = item.Position;
+                    selectedElement.Position.X -= selectedElement.Size.X;
+                    var selel = selectedElement as MultiTextElement;
+                    if (selel != null)
+                    {
+                        selel.TextPosition = item.Position;
+                        selel.TextPosition.X += item.Size.X;
+                    }
+                    selectedElement.Draw(batch, _font);
+                }
+                item.Draw(batch, _font, color);
             }
             batch.End();
             base.Draw(gameTime);

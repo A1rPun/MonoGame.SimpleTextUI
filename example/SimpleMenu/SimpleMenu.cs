@@ -35,8 +35,8 @@ namespace SimpleMenu
             menu = new SimpleTextUI(this, big, new[] { "Singleplayer", "Multiplayer", "Options", "Credits", "Exit" })
             {
                 Align = Alignment.Right,
-                TextColor = Color.IndianRed,
-                SelectedColor = Color.Red
+                TextColor = Color.LightGreen,
+                SelectedElement = new MultiTextElement("> ", " <", Color.LimeGreen)
             };
             options = new SimpleTextUI(this, big, new TextElement[]
             {
@@ -51,7 +51,7 @@ namespace SimpleMenu
             {
                 //Width = 600,
                 Align = Alignment.Center,
-                Visible = false,
+                Visible = false
             };
             currentUI = menu;
             iM = new InputManager(this);
@@ -79,15 +79,9 @@ namespace SimpleMenu
             else if (iM.JustPressed(Keys.Down))
                 currentUI.Move(Direction.Down);
             else if (iM.JustPressed(Keys.Left))
-            {
                 currentUI.Move(Direction.Left);
-                currentUI.Reflow();
-            }
             else if (iM.JustPressed(Keys.Right))
-            {
                 currentUI.Move(Direction.Right);
-                currentUI.Reflow();
-            }
             // Implement logic based on the selected action
             if (iM.JustPressed(Keys.Enter) || iM.JustPressed(MouseInput.LeftButton))
             {
@@ -165,10 +159,6 @@ namespace SimpleMenu
                     options.Font = small;
             }
             graphics.ApplyChanges();
-            if (menu != null)
-                menu.Reflow();
-            if (options != null)
-                options.Reflow();
         }
     }
 }
