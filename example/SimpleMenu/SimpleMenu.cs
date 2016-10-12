@@ -34,9 +34,6 @@ namespace SimpleMenu
             cursor = Content.Load<Texture2D>("img/cursor");
             menu = new SimpleTextUI(this, big, new[] { "Singleplayer", "Multiplayer", "Options", "Credits", "Exit" })
             {
-                Align = Alignment.Right,
-                TextColor = Color.LightGreen,
-                SelectedElement = new MultiTextElement("> ", " <", Color.LimeGreen)
             };
             options = new SimpleTextUI(this, big, new TextElement[]
             {

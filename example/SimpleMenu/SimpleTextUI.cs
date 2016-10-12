@@ -157,7 +157,7 @@ namespace A1r.SimpleTextUI
         public SimpleTextUI(Game game, SpriteFont font) : base(game)
         {
             batch = new SpriteBatch(Game.GraphicsDevice);
-            padding = new Vector2(0);
+            padding = new Vector2(100);
             _font = font;
             selectedElement = new TextElement("", Color.LimeGreen);
         }

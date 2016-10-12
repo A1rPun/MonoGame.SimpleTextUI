@@ -13,9 +13,9 @@ Inspired by N++ (metanetsoftware)
     var items = new[] { "Singleplayer", "Multiplayer", "Options", "Credits", "Exit" };
     var menu = new SimpleTextUI(this, font, items)
     {
-        TextColor = Color.IndianRed,
-        SelectedColor = Color.Red,
-        Align = Alignment.Right
+        TextColor = Color.Purple,
+        SelectedElement = new TextElement(">", Color.Green),
+        Align = Alignment.Left
     };
 
 **Navigating through menus**
