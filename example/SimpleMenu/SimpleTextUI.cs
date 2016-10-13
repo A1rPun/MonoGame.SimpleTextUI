@@ -34,6 +34,8 @@ namespace A1r.SimpleTextUI
         {
             batch.DrawString(font, Caption, Position, color ?? Color);
         }
+        public virtual string GetValue() { return Caption; }
+        public virtual void SetValue(string text) { Caption = text; }
     }
 
     public class MultiTextElement : TextElement
@@ -52,28 +54,44 @@ namespace A1r.SimpleTextUI
             batch.DrawString(font, Text, TextPosition, color ?? Color);
         }
         public virtual void Update(bool left = false) { }
+        public override string GetValue() { return Text; }
+        public override void SetValue(string text) { Text = text; }
     }
 
     public class SelectElement : MultiTextElement
     {
         public string[] Options;
         public int Index;
-        public SelectElement(string caption, string[] options, int index = 0) : base(caption)
+        public SelectElement(string caption, string[] options, string value = "") : base(caption)
         {
             Options = options;
-            Index = index;
-            Text = options.Length > 0 ? options[Index] : "";
+            SetValue(value);
         }
         public override void Update(bool left = false)
         {
+            setIndex(left ? Index - 1 : Index + 1);
+        }
+        private void setIndex(int index)
+        {
             var length = Options.Length;
-            if (length == 0) return;
-            Index = left ? Index - 1 : Index + 1;
-            if (Index < 0)
+            if (length > 0)
+            {
+                if (index < 0)
+                    index = 0;
+                else if (index >= length)
+                    index = length - 1;
+                Index = index;
+                Text = Options[Index];
+            }
+            else
+            {
                 Index = 0;
-            if (Index >= length)
-                Index = length - 1;
-            Text = Options[Index];
+                Text = "";
+            }
+        }
+        public override void SetValue(string text)
+        {
+            setIndex(text == string.Empty ? 0 : Array.IndexOf(Options, text));
         }
     }
 
@@ -87,21 +105,31 @@ namespace A1r.SimpleTextUI
         public NumericElement(string caption, float value = 0f, int decimals = 0,
             float min = float.MinValue, float max = float.MaxValue, float step = 1f) : base(caption)
         {
-            Value = value;
             Decimals = decimals;
             Min = min;
             Max = max;
             Step = step;
-            Text = Value.ToString("n" + Decimals.ToString());
+            setValue(value);
         }
         public override void Update(bool left = false)
         {
-            Value = left ? Value - Step : Value + Step;
-            if (Value < Min)
-                Value = Min;
-            if (Value >= Max)
-                Value = Max;
-            Text = Value.ToString("n" + Decimals.ToString());
+            var val = left ? Value - Step : Value + Step;
+            if (val < Min)
+                val = Min;
+            if (val >= Max)
+                val = Max;
+            setValue(val);
+        }
+        private void setValue(float val)
+        {
+            Value = (float)decimal.Round((decimal)val, Decimals);
+            Text = Value.ToString();
+        }
+        public override void SetValue(string text)
+        {
+            float val;
+            if (float.TryParse(text, out val))
+                setValue(val);
         }
     }
 
@@ -234,14 +262,7 @@ namespace A1r.SimpleTextUI
         }
         public string GetCurrentValue()
         {
-            return GetValue(index);
-        }
-        // Get the current caption or value
-        public string GetValue(int index)
-        {
-            var el = elements[index];
-            var mtext = el as MultiTextElement;
-            return mtext == null ? el.Caption : mtext.Text;
+            return elements[index].GetValue();
         }
         // Get all the current captions or values
         public string[] GetValues()
@@ -249,23 +270,14 @@ namespace A1r.SimpleTextUI
             var length = elements.Length;
             var result = new string[length];
             for (int i = 0; i < length; i++)
-                result[i] = GetValue(i);
+                result[i] = elements[i].GetValue();
             return result;
-        }
-        public void SetValue(int index, string val)
-        {
-            var el = elements[index];
-            var mtext = el as MultiTextElement;
-            if (mtext == null)
-                el.Caption = val;
-            else
-                mtext.Text = val;
         }
         public void SetValues(string[] values)
         {
             var length = values.Length;
             for (int i = 0; i < length; i++)
-                SetValue(i, values[i]);
+                elements[i].SetValue(values[i]);
         }
 
         public void Reflow()
@@ -285,6 +297,7 @@ namespace A1r.SimpleTextUI
             var pos = getPosition();
             var halfWidth = Width / 2;
             var selsize = selectedElement == null ? 0 : selectedElement.Size.X;
+
             for (int i = 0; i < items.Length; i++)
             {
                 var item = items[i];

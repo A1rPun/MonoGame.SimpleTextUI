@@ -33,7 +33,7 @@ Example in combination with [MonoGame.InputManager](https://github.com/A1rPun/Mo
     else if (iM.JustPressed(Keys.Right))
         menu.Move(Direction.Right);
 
-**Adding logic to the selection**
+**Adding logic to the selection**  
 When the value of the menu is "Exit"
 
     if (inputManager.JustPressed(Keys.Enter))
@@ -44,10 +44,6 @@ You can get all the current values like this
 
     if (inputManager.JustPressed(Keys.Esc))
         var options = menu.GetValues();
-
-### TODO
-
-- Form setValues
 
 ### Licence
 MIT

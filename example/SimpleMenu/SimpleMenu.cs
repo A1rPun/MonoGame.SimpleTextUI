@@ -34,15 +34,18 @@ namespace SimpleMenu
             cursor = Content.Load<Texture2D>("img/cursor");
             menu = new SimpleTextUI(this, big, new[] { "Singleplayer", "Multiplayer", "Options", "Credits", "Exit" })
             {
+                TextColor = Color.Purple,
+                SelectedElement = new TextElement(">", Color.Green),
+                Align = Alignment.Left
             };
             options = new SimpleTextUI(this, big, new TextElement[]
             {
                 new SelectElement("Video", new[] { "Fullscreen", "Windowed" }),
-                new SelectElement("Alignment", new[] { "Left", "Center", "Right" }, 1),
+                new SelectElement("Alignment", new[] { "Left", "Center", "Right" }, "Center"),
                 new NumericElement("Music", 0.02f, 3, 0f, 1f, 0.01f),
                 new NumericElement("SFX", 1337, 0, -1337, 13371337, 1337),
-                new SelectElement("Difficulty", new[] { "Chicken", "Casual", "Ragequit PLOS" }, 1),
-                new SelectElement("Numberwang", new[] { "2", "29", "42", "69", "1336.9", "1337" }, 2),
+                new SelectElement("Difficulty", new[] { "Chicken", "Casual", "Ragequit PLOS" }, "Casual"),
+                new SelectElement("Numberwang", new[] { "2", "29", "42", "69", "1336.9", "1337" }, "29"),
                 new TextElement("Back")
             })
             {
